@@ -20,66 +20,79 @@ import NIOCore
 import NIOPosix
 import HelloWorldModel
 
+
+protocol HelloService {
+    
+    func sayHello(request: HelloRequest) async throws -> HelloReply
+    static func createService() -> HelloService
+}
+
+@available(macOS 10.15, *)
+extension HelloService {
+    static func createService() -> HelloService {
+        return HelloServiceImpl()
+    }
+}
+
+@available(macOS 10.15, *)
+struct HelloServiceFactory {
+    static func createService() -> HelloService {
+        return HelloServiceImpl()
+    }
+}
+
+@available(macOS 10.15, *)
+class HelloServiceImpl: HelloService {
+    
+    func sayHello(request: HelloRequest) async throws -> HelloReply {
+        
+        let channel = try GRPCChannelPool.with(
+            target: .host("localhost", port: 1234),
+            transportSecurity: .plaintext,
+            eventLoopGroup: MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        )
+        defer {
+            try! channel.close().wait()
+        }
+        
+        let greeter = Helloworld_GreeterAsyncClient(channel: channel)
+        // Call and await sayHello function on greeter object
+        let grpcReply = try await greeter.sayHello(request.helloRequest)
+        
+        // Construct and return HelloReply struct from Helloworld_HelloReply
+        return HelloReply(message: grpcReply.message)
+    }
+    
+    static func createService() -> HelloService {
+           return HelloServiceImpl()
+       }
+}
+
+    
 @available(macOS 10.15, iOS 13, tvOS 13, watchOS 6, *)
 @main
 struct HelloWorldClient: AsyncParsableCommand {
-  @Option(help: "The port to connect to")
-  var port: Int = 1234
+        @Option(help: "The port to connect to")
+        var port: Int = 1234
+        
+        @Argument(help: "The name to greet")
+        var name: String?
+        
+        func run() async throws {
+            // Create service
+            let service: HelloService = HelloServiceFactory.createService()
 
-  @Argument(help: "The name to greet")
-  var name: String?
+            // Create request with name provided
+            let request = HelloRequest(name: "John Doe")
 
-  func run() async throws {
-    // Setup an `EventLoopGroup` for the connection to run on.
-    //
-    // See: https://github.com/apple/swift-nio#eventloops-and-eventloopgroups
-    let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+            // Call the sayHello function from the service with the created request
+            let reply = try await service.sayHello(request: request)
 
-    // Make sure the group is shutdown when we're done with it.
-    defer {
-      try! group.syncShutdownGracefully()
-    }
-
-    // Configure the channel, we're not using TLS so the connection is `insecure`.
-    let channel = try GRPCChannelPool.with(
-      target: .host("localhost", port: self.port),
-      transportSecurity: .plaintext,
-      eventLoopGroup: group
-    )
-
-    // Close the connection when we're done with it.
-    defer {
-      try! channel.close().wait()
-    }
-
-    // Provide the connection to the generated client.
-    let greeter = Helloworld_GreeterAsyncClient(channel: channel)
-
-    // Form the request with the name, if one was provided.
-      // this is where we form the request using the grpc struct, this is a very weird way to form a request. I think this is what we have to work on. On the client side it should be something like: Hello_Request
-//    let request = Helloworld_HelloRequest.with {
-//      $0.name = self.name ?? "upanshu"
-//    }
-      
-      let request = HelloW
-      
-      // let a  = HelloWorld("Upanshu)
-      
-//      let re = Helloworld_HelloRequest
-//      print(re)
-      
-//      let request2 = Hellow
-//      print(request2)
-
-    do {
-      let greeting = try await greeter.sayHello(request)
-    
-      print("Greeter received: \(greeting.message)")
-    } catch {
-      print("Greeter failed: \(error)")
-    }
-  }
+            // Print the reply message
+            print(reply.message)
+        }
 }
+
 #else
 @main
 enum HelloWorldClient {
@@ -88,3 +101,31 @@ enum HelloWorldClient {
   }
 }
 #endif // compiler(>=5.6)
+
+public struct HelloRequest {
+    
+    let helloRequest: Helloworld_HelloRequest
+    public var name: String { helloRequest.name }
+
+    public init(name: String) {
+        self.helloRequest = Helloworld_HelloRequest.with {
+            $0.name = name
+        }
+    }
+}
+    
+
+public struct HelloReply {
+    
+    let helloReply: Helloworld_HelloReply
+    public var message: String { helloReply.message }
+
+    public init(message: String) {
+        self.helloReply = Helloworld_HelloReply.with {
+            $0.message = message
+        }
+    }
+}
+
+
+

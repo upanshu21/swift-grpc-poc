@@ -16,7 +16,7 @@ let package = Package(
         .helloWorldServer,
         .helloWorldClient,
         .helloWorldModel,
-        .main
+        .HelloWorld
     ]
     
 )
@@ -30,18 +30,21 @@ extension Target.Dependency {
     )
     static let protobuf: Self = .product(name: "SwiftProtobuf", package: "swift-protobuf")
     static let helloWorldModel: Self = .target(name: "HelloWorldModel")
+    static let HelloWorld: Self = .target(name: "HelloWorld")
     
 }
 
 extension Target {
     
-    static let main: Target = .executableTarget(
-        name: "swift-protobuf-poc",
+    static let HelloWorld: Target = .executableTarget(
+        name: "HelloWorld",
         dependencies: [
             .grpc,
             .protobuf,
-            .argumentParser],
-        path: "Sources/Main")
+            .argumentParser,
+            .helloWorldModel
+        ],
+        path: "Sources/main")
     
     
     static let helloWorldServer: Target = .executableTarget(
@@ -61,7 +64,8 @@ extension Target {
         .grpc,
         .protobuf,
         .argumentParser,
-        .helloWorldModel
+        .helloWorldModel,
+        .HelloWorld,
       ],
       path: "Sources/Client/"
     )
