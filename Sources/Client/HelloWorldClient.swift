@@ -22,7 +22,7 @@ import HelloWorldModel
 
 
 protocol HelloService {
-    
+
     func sayHello(request: HelloRequest) async throws -> HelloReply
     static func createService() -> HelloService
 }
@@ -46,6 +46,8 @@ class HelloServiceImpl: HelloService {
     
     func sayHello(request: HelloRequest) async throws -> HelloReply {
         
+        let a = HelloRequest(name: "abc")
+
         let channel = try GRPCChannelPool.with(
             target: .host("localhost", port: 1234),
             transportSecurity: .plaintext,
@@ -54,15 +56,15 @@ class HelloServiceImpl: HelloService {
         defer {
             try! channel.close().wait()
         }
-        
+
         let greeter = Helloworld_GreeterAsyncClient(channel: channel)
         // Call and await sayHello function on greeter object
-        let grpcReply = try await greeter.sayHello(request.helloRequest)
-        
+        let grpcReply = try await greeter.sayHello(request)
+
         // Construct and return HelloReply struct from Helloworld_HelloReply
         return HelloReply(message: grpcReply.message)
     }
-    
+
     static func createService() -> HelloService {
            return HelloServiceImpl()
        }
@@ -80,10 +82,10 @@ struct HelloWorldClient: AsyncParsableCommand {
         
         func run() async throws {
             // Create service
-            let service: HelloService = HelloServiceFactory.createService()
+//            let service: HelloService = HelloServiceFactory.createService()
 
             // Create request with name provided
-            let request = HelloRequest(name: "John Doe")
+            let request = HelloRequest(name: "Joe")
 
             // Call the sayHello function from the service with the created request
             let reply = try await service.sayHello(request: request)
@@ -102,30 +104,7 @@ enum HelloWorldClient {
 }
 #endif // compiler(>=5.6)
 
-public struct HelloRequest {
-    
-    let helloRequest: Helloworld_HelloRequest
-    public var name: String { helloRequest.name }
 
-    public init(name: String) {
-        self.helloRequest = Helloworld_HelloRequest.with {
-            $0.name = name
-        }
-    }
-}
-    
-
-public struct HelloReply {
-    
-    let helloReply: Helloworld_HelloReply
-    public var message: String { helloReply.message }
-
-    public init(message: String) {
-        self.helloReply = Helloworld_HelloReply.with {
-            $0.message = message
-        }
-    }
-}
 
 
 

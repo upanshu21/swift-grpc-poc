@@ -9,7 +9,8 @@ let package = Package(
     dependencies: [
       .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.15.0"),
       .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.6.0"),
-      .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.1.1")
+      .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.1.1"),
+      .package(url: "https://github.com/square/wire.git", from: "4.7.2")
       ],
     
     targets: [
