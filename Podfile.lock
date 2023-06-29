@@ -1,0 +1,20 @@
+PODS:
+  - Wire (4.7.2)
+  - WireCompiler (4.7.2)
+
+DEPENDENCIES:
+  - Wire
+  - WireCompiler
+
+SPEC REPOS:
+  trunk:
+    - Wire
+    - WireCompiler
+
+SPEC CHECKSUMS:
+  Wire: 193a6a025213e0c2d13875fdef225df34d10b775
+  WireCompiler: 2af1e08c5ce91f87363172c45667d4358ad7a6b1
+
+PODFILE CHECKSUM: c4a58af0e7e5656d3a6434a42715ceee98355f7d
+
+COCOAPODS: 1.12.1
